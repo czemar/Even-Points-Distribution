@@ -10,13 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillRect(vec.x, vec.y, 40, 40);
     });
   }
-  const distribution = evenDistribution(20, 16);
 
   ctx.fillStyle = 'red';
-  fillCanvas(distribution.next().value.map(v => { return {x: v.x * 40, y: v.y * 40}}));
+  //fillCanvas(simpleDistribution(21, 16).map(v => { return {x: v.x * 40, y: v.y * 40}}));
 
-  ctx.fillStyle = 'black';
-  fillCanvas(distribution.next().value.map(v => { return {x: v.x * 40, y: v.y * 40}}));
+  ctx.fillStyle = 'gray';
+  fillCanvas((new EvenDistribution()).get(21, 4, 16).map(v => { return {x: v.x * 40, y: v.y * 40}}));
 });
 
 function simpleDistribution(amount, sideLength) {
@@ -84,4 +83,51 @@ function Clamp(vec, max) {
     x: (vec.x < max) ? vec.x : max - 1,
     y: (vec.y < max) ? vec.y : max - 1
   }
+}
+
+class EvenDistribution{
+  get(amount, clusterSize, sideLength) {
+    const _out = [];
+    const clusters = this.generateClusters(clusterSize, sideLength);
+
+    const powClusterSize = Math.pow(clusterSize, 2);
+
+    let modulo = amount % powClusterSize;
+    const avgAmount = Math.floor(amount / powClusterSize);
+
+    clusters.unorderedForEach(cluster => {
+      let currAmount = avgAmount;
+      if (modulo > 0) {
+        currAmount++;
+        modulo--;
+      }
+      for (let i = 0; i < currAmount; i++) {
+        _out.push({
+          x: Math.floor(Math.random() * clusterSize) + cluster.x,
+          y: Math.floor(Math.random() * clusterSize) + cluster.y
+        });
+      } 
+    });
+
+    return _out;
+  }
+
+  generateClusters(clusterSize, sideLength) {
+    const _out = [];
+    for (let i = 0; i < sideLength; i += clusterSize) {
+      for (let j = 0; j < sideLength; j += clusterSize) {
+        _out.push({
+          x: i,
+          y: j, 
+        });
+      }
+    }
+    return _out;
+  }
+}
+
+Array.prototype.unorderedForEach = function(func) {
+  const _copy = [...this];
+  _copy.sort(v => (Math.random() > 0.5) ? 1 : -1);
+  _copy.forEach(el => func(el));
 }
